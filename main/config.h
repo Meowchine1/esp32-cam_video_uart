@@ -7,13 +7,36 @@
 #include <esp_camera.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
- 
 
 #define portTICK_RATE_MS portTICK_PERIOD_MS
 
 #define BOARD_ESP32CAM_AITHINKER
+
+// ---------arduino------------
+#define PWDN_GPIO_NUM 32
+#define RESET_GPIO_NUM -1
+#define XCLK_GPIO_NUM 0
+#define SIOD_GPIO_NUM 26
+#define SIOC_GPIO_NUM 27
+
+#define Y9_GPIO_NUM 35
+#define Y8_GPIO_NUM 34
+#define Y7_GPIO_NUM 39
+#define Y6_GPIO_NUM 36
+#define Y5_GPIO_NUM 21
+#define Y4_GPIO_NUM 19
+#define Y3_GPIO_NUM 18
+#define Y2_GPIO_NUM 5
+#define VSYNC_GPIO_NUM 25
+#define HREF_GPIO_NUM 23
+#define PCLK_GPIO_NUM 22
+
+// 4 for flash led or 33 for normal led
+#define LED_GPIO_NUM 4
+// ---------------------------------
+
 #define CAM_PIN_PWDN 32
-#define CAM_PIN_RESET -1 //software reset will be performed
+#define CAM_PIN_RESET -1 // software reset will be performed
 #define CAM_PIN_XCLK 0
 #define CAM_PIN_SIOD 26
 #define CAM_PIN_SIOC 27
@@ -31,6 +54,43 @@
 #define CAM_PIN_PCLK 22
 
 static const char *TAG = "main:main";
+
+// static camera_config_t camera_config = {
+//     .pin_reset = CAM_PIN_RESET,
+//     .pin_xclk = CAM_PIN_XCLK,
+//     .pin_sscb_sda = CAM_PIN_SIOD,
+//     .pin_sscb_scl = CAM_PIN_SIOC,
+
+//     .pin_d7 = CAM_PIN_D7,
+//     .pin_d6 = CAM_PIN_D6,
+//     .pin_d5 = CAM_PIN_D5,
+//     .pin_d4 = CAM_PIN_D4,
+//     .pin_d3 = CAM_PIN_D3,
+//     .pin_d2 = CAM_PIN_D2,
+//     .pin_d1 = CAM_PIN_D1,
+//     .pin_d0 = CAM_PIN_D0,
+//     .pin_vsync = CAM_PIN_VSYNC,
+//     .pin_href = CAM_PIN_HREF,
+//     .pin_pclk = CAM_PIN_PCLK,
+
+//     //XCLK 20MHz or 10MHz
+//     .xclk_freq_hz = 20000000,
+//     .ledc_timer = LEDC_TIMER_0,
+//     .ledc_channel = LEDC_CHANNEL_0,
+
+//     .pixel_format = PIXFORMAT_JPEG,//YUV422,GRAYSCALE,RGB565,JPEG
+//     .frame_size = FRAMESIZE_UXGA,//QQVGA-UXGA Do not use sizes above QVGA when not JPEG
+
+//     .jpeg_quality = 12, //0-63 lower number means higher quality
+//     .fb_count = 1 //if more than one, i2s runs in continuous mode. Use only with JPEG
+// };
+static int count = 0; // Объявляем counter как статическую переменную
+
+int get_counter()
+{
+    count += 1;
+    return count;
+}
 
 static camera_config_t camera_config = {
     .pin_pwdn = CAM_PIN_PWDN,
@@ -51,24 +111,24 @@ static camera_config_t camera_config = {
     .pin_href = CAM_PIN_HREF,
     .pin_pclk = CAM_PIN_PCLK,
 
-    //XCLK 20MHz or 10MHz for OV2640 double FPS (Experimental)
-    .xclk_freq_hz = 20000000,
+    // XCLK 20MHz or 10MHz for OV2640 double FPS (Experimental)
+    .xclk_freq_hz = 20000000, // <!> was 20000000
     .ledc_timer = LEDC_TIMER_0,
     .ledc_channel = LEDC_CHANNEL_0,
 
-    .pixel_format = PIXFORMAT_RGB565, //YUV422,GRAYSCALE,RGB565,JPEG
-    .frame_size = FRAMESIZE_QVGA,    //QQVGA-UXGA, For ESP32, do not use sizes above QVGA when not JPEG. The performance of the ESP32-S series has improved a lot, but JPEG mode always gives better frame rates.
+    .pixel_format = PIXFORMAT_RGB565, // YUV422,GRAYSCALE,RGB565,JPEG
+    .frame_size = FRAMESIZE_QVGA,     // QQVGA-UXGA, For ESP32, do not use sizes above QVGA when not JPEG. The performance of the ESP32-S series has improved a lot, but JPEG mode always gives better frame rates.
 
-    .jpeg_quality = 12, //0-63, for OV series camera sensors, lower number means higher quality
-    .fb_count = 1,       //When jpeg mode is used, if fb_count more than one, the driver will work in continuous mode.
-    .fb_location = CAMERA_FB_IN_PSRAM,
+    .jpeg_quality = 12, // 0-63, for OV series camera sensors, lower number means higher quality
+    .fb_count = 1,      // config.fb_count = 10;  // Or some other number   // When jpeg mode is used, if fb_count more than one, the driver will work in continuous mode.
+    //.fb_location = CAMERA_FB_IN_PSRAM,
+    .fb_location = CAMERA_FB_IN_DRAM,
     .grab_mode = CAMERA_GRAB_WHEN_EMPTY,
 };
 
-
 static esp_err_t init_camera(void)
 {
-    //initialize the camera
+    // initialize the camera
     esp_err_t err = esp_camera_init(&camera_config);
     if (err != ESP_OK)
     {
@@ -78,3 +138,21 @@ static esp_err_t init_camera(void)
 
     return ESP_OK;
 }
+
+// void send_image_over_uart() {
+//     uint8_t* img_buf;
+//     size_t img_size;
+
+//     camera_fb_t* fb = esp_camera_fb_get();
+//     if (!fb) {
+//         ESP_LOGE(TAG, "Camera capture failed");
+//         return;
+//     }
+
+//     img_buf = fb->buf;
+//     img_size = fb->len;
+
+//     uart_write_bytes(UART_NUM, (const char*)img_buf, img_size);
+
+//     esp_camera_fb_return(fb);
+// }

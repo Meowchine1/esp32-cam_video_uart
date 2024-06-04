@@ -4,12 +4,14 @@
 #define RXD_PIN (GPIO_NUM_3)
 const uart_port_t uart_num = UART_NUM_0;
 
-char* Txdata = (char*) malloc(100);
 
+//char* Txdata = (char*) malloc(100);
+#define BUFLEN  100
+char Txdata[BUFLEN];
 
 void init_uart()
 {
-     
+
     uart_config_t uart_config = {
         .baud_rate = 115200,
         .data_bits = UART_DATA_8_BITS,
@@ -23,11 +25,10 @@ void init_uart()
     uart_param_config(uart_num, &uart_config);
     uart_set_pin(uart_num, TXD_PIN, RXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     uart_driver_install(uart_num, 1024, 0, 0, NULL, 0);
-
 }
 
-void TX_message(char* message){
-sprintf (Txdata, "Taking picture \r\n");
-        uart_write_bytes(uart_num, Txdata, strlen(Txdata));
-
-}
+// void TX_message(const char *message)
+// {
+//     sprintf((char*)Txdata, message);
+//     uart_write_bytes(uart_num, Txdata, strlen(message));
+// }
