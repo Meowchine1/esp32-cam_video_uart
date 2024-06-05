@@ -201,7 +201,7 @@ static void init_sdcard()
  
 void app_main(void)
 {
-    int counter = get_counter()
+    int counter = 0;
     uint8_t *img_buf;
     size_t img_size;
     init_camera();
@@ -238,6 +238,7 @@ void app_main(void)
         }
         fclose(file);
         free(pic_name);
+        esp_camera_fb_return(pic);
 
         vTaskDelay(3000 / portTICK_PERIOD_MS);
     }
